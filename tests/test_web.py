@@ -170,6 +170,49 @@ def test_set_display_settings(tmp_path):
     }
 
 
+def test_status_includes_cache_stats(tmp_path):
+    runtime = _mk_runtime(tmp_path)
+    app = create_app(runtime)
+    client = app.test_client()
+
+    data = client.get("/status").get_json()
+    cache = data["cache"]
+    assert cache["max_disk_usage_percent"] == 80
+    assert cache["min_free_space_mb"] == 0
+    assert cache["cached_files"] == 0
+    assert cache["cached_bytes"] == 0
+    assert "disk" in cache
+    assert "total_bytes" in cache["disk"]
+
+
+def test_set_cache_settings(tmp_path):
+    runtime = _mk_runtime(tmp_path)
+    app = create_app(runtime)
+    client = app.test_client()
+
+    response = client.post(
+        "/config/cache",
+        json={"max_disk_usage_percent": 60, "min_free_space_mb": 1024},
+    )
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["ok"] is True
+    assert body["result"] == {"max_disk_usage_percent": 60, "min_free_space_mb": 1024}
+    assert runtime.config.cache.max_disk_usage_percent == 60
+    assert runtime.config.cache.min_free_space_mb == 1024
+
+
+def test_set_cache_settings_rejects_out_of_range(tmp_path):
+    runtime = _mk_runtime(tmp_path)
+    app = create_app(runtime)
+    client = app.test_client()
+
+    assert client.post("/config/cache", json={"max_disk_usage_percent": 5}).status_code == 400
+    assert client.post("/config/cache", json={"max_disk_usage_percent": 120}).status_code == 400
+    assert client.post("/config/cache", json={"min_free_space_mb": -1}).status_code == 400
+    assert client.post("/config/cache", json={"max_disk_usage_percent": "nope"}).status_code == 400
+
+
 def test_set_display_settings_rejects_invalid_mode(tmp_path):
     runtime = _mk_runtime(tmp_path)
     app = create_app(runtime)

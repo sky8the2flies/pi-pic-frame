@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import shutil
 import threading
 import time
 from dataclasses import dataclass, field
@@ -122,6 +123,51 @@ class PictureFrameRuntime:
         if sync_now:
             response["sync"] = self.sync_now()
         return response
+
+    def update_cache_settings(
+        self,
+        max_disk_usage_percent: int | None = None,
+        min_free_space_mb: int | None = None,
+    ) -> dict[str, int]:
+        with self._lock:
+            cache_cfg = self.config.cache
+            if max_disk_usage_percent is not None:
+                if max_disk_usage_percent < 10 or max_disk_usage_percent > 99:
+                    raise ValueError("max_disk_usage_percent must be between 10 and 99")
+                cache_cfg.max_disk_usage_percent = int(max_disk_usage_percent)
+            if min_free_space_mb is not None:
+                if min_free_space_mb < 0:
+                    raise ValueError("min_free_space_mb must be >= 0")
+                cache_cfg.min_free_space_mb = int(min_free_space_mb)
+            self._persist_config()
+            return {
+                "max_disk_usage_percent": cache_cfg.max_disk_usage_percent,
+                "min_free_space_mb": cache_cfg.min_free_space_mb,
+            }
+
+    def cache_stats(self) -> dict[str, object]:
+        """Return current cache size and disk usage for the cache directory."""
+        cache_cfg = self.config.cache
+        entries = self.sync.cache.entries()
+        cached_bytes = sum(entry.size_bytes for entry in entries)
+        try:
+            usage = shutil.disk_usage(cache_cfg.directory)
+            disk = {
+                "total_bytes": usage.total,
+                "used_bytes": usage.used,
+                "free_bytes": usage.free,
+                "used_percent": (usage.used / usage.total) * 100 if usage.total else 0,
+            }
+        except OSError:
+            disk = {"total_bytes": 0, "used_bytes": 0, "free_bytes": 0, "used_percent": 0}
+        return {
+            "cached_bytes": cached_bytes,
+            "cached_files": len(entries),
+            "directory": str(cache_cfg.directory),
+            "max_disk_usage_percent": cache_cfg.max_disk_usage_percent,
+            "min_free_space_mb": cache_cfg.min_free_space_mb,
+            "disk": disk,
+        }
 
     def update_display_settings(
         self,

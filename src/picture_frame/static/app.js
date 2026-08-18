@@ -6,6 +6,7 @@ const SECTION_TITLES = {
   immich: "Immich",
   albums: "Albums",
   display: "Display",
+  storage: "Storage",
   advanced: "Advanced",
 };
 
@@ -98,6 +99,48 @@ function formatCountdown(seconds) {
   return `in ${Math.floor(seconds / 3600)}h`;
 }
 
+function formatBytes(bytes) {
+  if (bytes == null || Number.isNaN(bytes)) return "—";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let value = Number(bytes);
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  const digits = value >= 100 ? 0 : value >= 10 ? 1 : 2;
+  return `${value.toFixed(digits)} ${units[unit]}`;
+}
+
+function renderStorage(cache) {
+  if (!cache) return;
+  document.getElementById("storageFiles").textContent = cache.cached_files ?? 0;
+  document.getElementById("storageCached").textContent = formatBytes(cache.cached_bytes);
+  const disk = cache.disk || {};
+  document.getElementById("storageUsed").textContent = formatBytes(disk.used_bytes);
+  document.getElementById("storageFree").textContent = formatBytes(disk.free_bytes);
+
+  document.getElementById("maxDiskPct").value = cache.max_disk_usage_percent;
+  document.getElementById("minFreeMb").value = cache.min_free_space_mb;
+
+  const cap = Number(cache.max_disk_usage_percent) || 100;
+  const used = Number(disk.used_percent) || 0;
+  const fill = document.getElementById("diskBar");
+  fill.style.width = `${Math.min(100, used).toFixed(1)}%`;
+  fill.classList.remove("warn", "bad");
+  if (used >= cap) fill.classList.add("bad");
+  else if (used >= cap * 0.9) fill.classList.add("warn");
+
+  document.getElementById("diskCap").style.left = `${Math.min(100, cap)}%`;
+
+  const pill = document.getElementById("storagePill");
+  pill.textContent = `${used.toFixed(1)}% used · cap ${cap}%`;
+  pill.className = "pill " + (used >= cap ? "bad" : used >= cap * 0.9 ? "warn" : "ok");
+
+  document.getElementById("storageHint").textContent =
+    `Directory: ${cache.directory}. Cap at ${cap}%, keep at least ${cache.min_free_space_mb} MB free.`;
+}
+
 function renderStatus(data) {
   document.getElementById("statImages").textContent = data.image_count ?? "—";
   document.getElementById("statLastSync").textContent = formatRelative(data.last_sync);
@@ -156,6 +199,8 @@ function renderStatus(data) {
     const select = document.getElementById("albumSelect");
     setSelectedValues(select, data.albums);
   }
+
+  renderStorage(data.cache);
 
   document.getElementById("statusBox").textContent = JSON.stringify(data, null, 2);
 }
@@ -220,6 +265,20 @@ const app = {
     try {
       await api("/config/albums", { method: "POST", body: JSON.stringify(payload) });
       showToast("Albums saved", "ok");
+      await this.refreshStatus();
+    } catch (err) {
+      showToast(err.message, "error");
+    }
+  },
+
+  async saveCache() {
+    const payload = {
+      max_disk_usage_percent: Number(document.getElementById("maxDiskPct").value),
+      min_free_space_mb: Number(document.getElementById("minFreeMb").value),
+    };
+    try {
+      await api("/config/cache", { method: "POST", body: JSON.stringify(payload) });
+      showToast("Cache settings saved", "ok");
       await this.refreshStatus();
     } catch (err) {
       showToast(err.message, "error");

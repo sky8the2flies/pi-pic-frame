@@ -2,8 +2,6 @@
 
 Python digital picture frame for Raspberry Pi. Photos come from a self-hosted [Immich](https://immich.app/) instance running on the same Pi (or anywhere on your network).
 
-Why Immich: Google Photos deprecated third-party library access on March 31, 2025 (all `photoslibrary.*` scopes return 403). Immich runs locally, gives full control, and has a mobile app for auto-backup.
-
 ## Features
 
 - Fullscreen HDMI slideshow with `fit + blurred background`, `fit`, or `crop` modes
@@ -118,7 +116,7 @@ Protected (require `Authorization: Bearer <token>` when `auth_token` is set):
 - Oldest cached images are evicted only when new downloads need the space.
 - Failed downloads are logged and counted in the sync stats.
 
-## Test on Mac / any Docker host
+## Test on Computer / any Docker host
 
 `docker-compose.yml` at the repo root spins up Immich plus the picture-frame headless service (containers on Mac can't drive the host screen, so the display runs natively).
 

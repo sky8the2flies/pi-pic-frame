@@ -39,6 +39,9 @@
         <a href="#display" class="nav-item" data-section="display">
           <span class="nav-icon" aria-hidden="true">◑</span> Display
         </a>
+        <a href="#storage" class="nav-item" data-section="storage">
+          <span class="nav-icon" aria-hidden="true">◫</span> Storage
+        </a>
         <a href="#advanced" class="nav-item" data-section="advanced">
           <span class="nav-icon" aria-hidden="true">⚙</span> Advanced
         </a>
@@ -172,6 +175,61 @@
             </div>
             <div class="actions">
               <button class="primary" onclick="app.saveDisplay()">Save display settings</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="content" id="section-storage" data-section-body hidden>
+        <div class="card">
+          <div class="card-head">
+            <h2>Cache usage</h2>
+            <span id="storagePill" class="pill neutral">—</span>
+          </div>
+          <div class="card-body">
+            <div class="stat-grid">
+              <div class="stat">
+                <div class="stat-label">Cached photos</div>
+                <div class="stat-value" id="storageFiles">—</div>
+              </div>
+              <div class="stat">
+                <div class="stat-label">Cache size</div>
+                <div class="stat-value" id="storageCached">—</div>
+              </div>
+              <div class="stat">
+                <div class="stat-label">Disk used</div>
+                <div class="stat-value" id="storageUsed">—</div>
+              </div>
+              <div class="stat">
+                <div class="stat-label">Free space</div>
+                <div class="stat-value" id="storageFree">—</div>
+              </div>
+            </div>
+            <label for="diskBar">Disk usage vs. cap</label>
+            <div class="bar"><div class="bar-fill" id="diskBar"></div><div class="bar-cap" id="diskCap"></div></div>
+            <p class="muted small" id="storageHint">—</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>Disk usage limits</h2>
+          </div>
+          <div class="card-body">
+            <div class="grid two">
+              <div>
+                <label for="maxDiskPct">Max disk usage (%)</label>
+                <input id="maxDiskPct" type="number" min="10" max="99" step="1" value="80">
+                <p class="muted small">Downloads pause once total disk usage would exceed this cap.</p>
+              </div>
+              <div>
+                <label for="minFreeMb">Minimum free space (MB)</label>
+                <input id="minFreeMb" type="number" min="0" step="16" value="512">
+                <p class="muted small">Always keep at least this much free on the cache disk.</p>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="primary" onclick="app.saveCache()">Save cache settings</button>
             </div>
           </div>
         </div>

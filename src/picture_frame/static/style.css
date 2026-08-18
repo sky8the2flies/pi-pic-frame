@@ -223,6 +223,33 @@ label {
 }
 .stat-value { font-size: 20px; font-weight: 700; margin-top: 0.25rem; color: var(--text); }
 
+.bar {
+  position: relative;
+  height: 14px;
+  background: #eef2f7;
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 0.35rem 0 0.15rem;
+}
+.bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #2f7de1, #66a3ff);
+  border-radius: 999px 0 0 999px;
+  transition: width 220ms ease, background 220ms ease;
+}
+.bar-fill.warn { background: linear-gradient(90deg, #e0a800, #ffcc55); }
+.bar-fill.bad { background: linear-gradient(90deg, #dc3545, #f27380); }
+.bar-cap {
+  position: absolute;
+  top: -3px; bottom: -3px;
+  width: 2px;
+  background: #0f172a;
+  opacity: 0.55;
+  border-radius: 2px;
+}
+
 .pill {
   display: inline-flex; align-items: center;
   padding: 0.2rem 0.65rem;

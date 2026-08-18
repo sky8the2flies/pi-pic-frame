@@ -89,6 +89,7 @@ def create_app(runtime: PictureFrameRuntime) -> Flask:
                     "mode": display.mode,
                 },
                 "sync_interval_minutes": runtime.config.sync.interval_minutes,
+                "cache": runtime.cache_stats(),
             },
             200,
         )
@@ -154,6 +155,27 @@ def create_app(runtime: PictureFrameRuntime) -> Flask:
             kwargs["mode"] = str(payload["mode"])
         try:
             updated = runtime.update_display_settings(**kwargs)  # type: ignore[arg-type]
+        except ValueError as exc:
+            return {"ok": False, "error": str(exc)}, 400
+        return {"ok": True, "result": updated}, 200
+
+    @app.post("/config/cache")
+    @_require_auth
+    def set_cache() -> tuple[dict[str, object], int]:
+        payload = request.get_json(silent=True) or {}
+        kwargs: dict[str, object] = {}
+        if "max_disk_usage_percent" in payload:
+            try:
+                kwargs["max_disk_usage_percent"] = int(payload["max_disk_usage_percent"])
+            except (TypeError, ValueError):
+                return {"ok": False, "error": "max_disk_usage_percent must be an integer"}, 400
+        if "min_free_space_mb" in payload:
+            try:
+                kwargs["min_free_space_mb"] = int(payload["min_free_space_mb"])
+            except (TypeError, ValueError):
+                return {"ok": False, "error": "min_free_space_mb must be an integer"}, 400
+        try:
+            updated = runtime.update_cache_settings(**kwargs)  # type: ignore[arg-type]
         except ValueError as exc:
             return {"ok": False, "error": str(exc)}, 400
         return {"ok": True, "result": updated}, 200
