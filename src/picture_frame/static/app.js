@@ -138,7 +138,7 @@ function renderStorage(cache) {
   pill.className = "pill " + (used >= cap ? "bad" : used >= cap * 0.9 ? "warn" : "ok");
 
   document.getElementById("storageHint").textContent =
-    `Directory: ${cache.directory}. Cap at ${cap}%, keep at least ${cache.min_free_space_mb} MB free.`;
+    `Directory: ${cache.directory}. Cap at ${cap}%, min ${cache.min_free_space_mb} MB free — oldest cached photos are evicted first when either limit would be crossed.`;
 }
 
 function renderStatus(data) {

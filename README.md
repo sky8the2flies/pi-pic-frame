@@ -112,8 +112,9 @@ Protected (require `Authorization: Bearer <token>` when `auth_token` is set):
 ## Cache behavior
 
 - Photos live under `cache.directory`; metadata in `cache.metadata_file`.
-- Downloads never exceed `cache.max_disk_usage_percent` (default 80%) nor drop below `cache.min_free_space_mb`.
-- Oldest cached images are evicted only when new downloads need the space.
+- Rolling FIFO: when downloading a new photo would push total disk usage past `cache.max_disk_usage_percent` (default 80%) or drop free space below `cache.min_free_space_mb`, the **oldest** cached photo (by last-seen timestamp) is deleted to make room. Repeats until the new photo fits or the cache is empty.
+- Nothing is queued or paused — the slideshow keeps cycling through whatever is cached.
+- Both limits are editable at runtime on the **Storage** tab of the dashboard.
 - Failed downloads are logged and counted in the sync stats.
 
 ## Test on Computer / any Docker host

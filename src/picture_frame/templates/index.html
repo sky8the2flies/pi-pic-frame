@@ -220,12 +220,12 @@
               <div>
                 <label for="maxDiskPct">Max disk usage (%)</label>
                 <input id="maxDiskPct" type="number" min="10" max="99" step="1" value="80">
-                <p class="muted small">Downloads pause once total disk usage would exceed this cap.</p>
+                <p class="muted small">When new photos would push disk usage past this cap, the oldest cached photos are evicted to make room.</p>
               </div>
               <div>
                 <label for="minFreeMb">Minimum free space (MB)</label>
                 <input id="minFreeMb" type="number" min="0" step="16" value="512">
-                <p class="muted small">Always keep at least this much free on the cache disk.</p>
+                <p class="muted small">Same rule: keep at least this much free on the cache disk, evicting oldest photos first.</p>
               </div>
             </div>
             <div class="actions">
