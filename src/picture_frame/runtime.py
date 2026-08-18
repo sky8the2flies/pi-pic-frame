@@ -124,6 +124,14 @@ class PictureFrameRuntime:
             response["sync"] = self.sync_now()
         return response
 
+    def update_sync_settings(self, interval_minutes: int) -> dict[str, int]:
+        if interval_minutes < 1 or interval_minutes > 1440:
+            raise ValueError("interval_minutes must be between 1 and 1440")
+        with self._lock:
+            self.config.sync.interval_minutes = int(interval_minutes)
+            self._persist_config()
+        return {"interval_minutes": self.config.sync.interval_minutes}
+
     def update_cache_settings(
         self,
         max_disk_usage_percent: int | None = None,
@@ -221,9 +229,16 @@ class PictureFrameRuntime:
             except Exception:
                 # Already logged inside sync_now; keep the loop alive.
                 pass
-            interval_s = max(_MIN_SYNC_INTERVAL_SECONDS, self.config.sync.interval_minutes * 60)
-            deadline = time.time() + interval_s
-            while time.time() < deadline and not self.state.stop:
+            sync_finished_at = time.time()
+            # Re-read the interval on every tick so runtime UI changes take
+            # effect without waiting for the current cycle to end.
+            while not self.state.stop:
+                interval_s = max(
+                    _MIN_SYNC_INTERVAL_SECONDS,
+                    self.config.sync.interval_minutes * 60,
+                )
+                if time.time() - sync_finished_at >= interval_s:
+                    break
                 time.sleep(_SYNC_SLEEP_TICK_SECONDS)
 
     def _persist_config(self) -> None:

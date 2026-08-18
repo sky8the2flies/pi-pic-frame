@@ -195,6 +195,10 @@ function renderStatus(data) {
     document.getElementById("displayMode").value = data.display.mode;
   }
 
+  if (data.sync_interval_minutes) {
+    document.getElementById("syncInterval").value = data.sync_interval_minutes;
+  }
+
   if (Array.isArray(data.albums)) {
     const select = document.getElementById("albumSelect");
     setSelectedValues(select, data.albums);
@@ -265,6 +269,19 @@ const app = {
     try {
       await api("/config/albums", { method: "POST", body: JSON.stringify(payload) });
       showToast("Albums saved", "ok");
+      await this.refreshStatus();
+    } catch (err) {
+      showToast(err.message, "error");
+    }
+  },
+
+  async saveSync() {
+    const payload = {
+      interval_minutes: Number(document.getElementById("syncInterval").value),
+    };
+    try {
+      const data = await api("/config/sync", { method: "POST", body: JSON.stringify(payload) });
+      showToast(`Sync interval set to ${data.result.interval_minutes} min`, "ok");
       await this.refreshStatus();
     } catch (err) {
       showToast(err.message, "error");

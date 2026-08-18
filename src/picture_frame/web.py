@@ -159,6 +159,22 @@ def create_app(runtime: PictureFrameRuntime) -> Flask:
             return {"ok": False, "error": str(exc)}, 400
         return {"ok": True, "result": updated}, 200
 
+    @app.post("/config/sync")
+    @_require_auth
+    def set_sync() -> tuple[dict[str, object], int]:
+        payload = request.get_json(silent=True) or {}
+        if "interval_minutes" not in payload:
+            return {"ok": False, "error": "interval_minutes is required"}, 400
+        try:
+            interval_minutes = int(payload["interval_minutes"])
+        except (TypeError, ValueError):
+            return {"ok": False, "error": "interval_minutes must be an integer"}, 400
+        try:
+            updated = runtime.update_sync_settings(interval_minutes=interval_minutes)
+        except ValueError as exc:
+            return {"ok": False, "error": str(exc)}, 400
+        return {"ok": True, "result": updated}, 200
+
     @app.post("/config/cache")
     @_require_auth
     def set_cache() -> tuple[dict[str, object], int]:

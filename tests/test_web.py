@@ -170,6 +170,30 @@ def test_set_display_settings(tmp_path):
     }
 
 
+def test_set_sync_interval(tmp_path):
+    runtime = _mk_runtime(tmp_path)
+    app = create_app(runtime)
+    client = app.test_client()
+
+    response = client.post("/config/sync", json={"interval_minutes": 10})
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["ok"] is True
+    assert body["result"] == {"interval_minutes": 10}
+    assert runtime.config.sync.interval_minutes == 10
+
+
+def test_set_sync_interval_rejects_invalid(tmp_path):
+    runtime = _mk_runtime(tmp_path)
+    app = create_app(runtime)
+    client = app.test_client()
+
+    assert client.post("/config/sync", json={}).status_code == 400
+    assert client.post("/config/sync", json={"interval_minutes": 0}).status_code == 400
+    assert client.post("/config/sync", json={"interval_minutes": 2000}).status_code == 400
+    assert client.post("/config/sync", json={"interval_minutes": "soon"}).status_code == 400
+
+
 def test_status_includes_cache_stats(tmp_path):
     runtime = _mk_runtime(tmp_path)
     app = create_app(runtime)
