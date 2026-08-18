@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Picture Frame Console</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%232f7de1'/%3E%3C/svg%3E">
+</head>
+<body>
+  <div id="loginOverlay" class="overlay" hidden>
+    <div class="login-card">
+      <div class="brand"><span class="brand-dot"></span> Picture Frame</div>
+      <h2>Sign in</h2>
+      <p class="muted">An access token is required to control this frame.</p>
+      <label for="loginToken">Access token</label>
+      <input id="loginToken" type="password" autocomplete="current-password" placeholder="Paste token">
+      <button id="loginSubmit" class="primary block">Continue</button>
+      <p id="loginError" class="error" hidden></p>
+    </div>
+  </div>
+
+  <div class="layout" id="appShell" hidden>
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-dot"></span>
+        <span>Picture Frame</span>
+      </div>
+      <nav class="nav">
+        <a href="#dashboard" class="nav-item" data-section="dashboard">
+          <span class="nav-icon" aria-hidden="true">▦</span> Dashboard
+        </a>
+        <a href="#immich" class="nav-item" data-section="immich">
+          <span class="nav-icon" aria-hidden="true">◈</span> Immich
+        </a>
+        <a href="#albums" class="nav-item" data-section="albums">
+          <span class="nav-icon" aria-hidden="true">☰</span> Albums
+        </a>
+        <a href="#display" class="nav-item" data-section="display">
+          <span class="nav-icon" aria-hidden="true">◑</span> Display
+        </a>
+        <a href="#advanced" class="nav-item" data-section="advanced">
+          <span class="nav-icon" aria-hidden="true">⚙</span> Advanced
+        </a>
+      </nav>
+      <button id="logoutBtn" class="ghost" hidden>Sign out</button>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-title">
+          <span class="chev" aria-hidden="true">←</span>
+          <h1 id="pageTitle">Dashboard</h1>
+        </div>
+        <div class="topbar-actions">
+          <span id="connStatus" class="pill">Disconnected</span>
+          <button class="icon-btn" title="Refresh" onclick="app.refreshStatus()">↻</button>
+        </div>
+      </header>
+
+      <section class="content" id="section-dashboard" data-section-body>
+        <div class="card">
+          <div class="card-head">
+            <h2>Overview</h2>
+          </div>
+          <div class="card-body">
+            <div class="stat-grid">
+              <div class="stat">
+                <div class="stat-label">Cached photos</div>
+                <div class="stat-value" id="statImages">—</div>
+              </div>
+              <div class="stat">
+                <div class="stat-label">Last sync</div>
+                <div class="stat-value" id="statLastSync">—</div>
+              </div>
+              <div class="stat">
+                <div class="stat-label">Sync interval</div>
+                <div class="stat-value" id="statInterval">—</div>
+              </div>
+              <div class="stat">
+                <div class="stat-label">Next sync</div>
+                <div class="stat-value" id="statNextSync">—</div>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="primary" onclick="app.syncNow()">Sync now</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>Last sync</h2>
+          </div>
+          <div class="card-body">
+            <pre id="lastSyncBox" class="code">No sync yet.</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="content" id="section-immich" data-section-body hidden>
+        <div class="card">
+          <div class="card-head">
+            <h2>Immich connection</h2>
+            <span id="immichBadge" class="pill neutral">Not configured</span>
+          </div>
+          <div class="card-body">
+            <div class="grid two">
+              <div>
+                <label for="baseUrl">Base URL</label>
+                <input id="baseUrl" type="text" placeholder="http://localhost:2283">
+              </div>
+              <div>
+                <label for="apiKey">API key</label>
+                <input id="apiKey" type="password" placeholder="Immich API key">
+                <p class="muted small">Create in Immich → Account → API Keys with permissions: <code>asset.read</code>, <code>asset.download</code>, <code>album.read</code>, <code>server.ping</code>.</p>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="primary" onclick="app.saveImmich()">Save connection</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="content" id="section-albums" data-section-body hidden>
+        <div class="card">
+          <div class="card-head">
+            <h2>Albums</h2>
+            <button class="ghost" onclick="app.loadAlbums()">Refresh list</button>
+          </div>
+          <div class="card-body">
+            <label for="albumSelect">Select one or more albums</label>
+            <select id="albumSelect" multiple size="10"></select>
+            <div class="row gap">
+              <label class="toggle">
+                <input id="syncNow" type="checkbox">
+                <span class="slider"></span>
+                <span>Sync immediately after saving</span>
+              </label>
+            </div>
+            <div class="actions">
+              <button class="primary" onclick="app.saveAlbums()">Save albums</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="content" id="section-display" data-section-body hidden>
+        <div class="card">
+          <div class="card-head">
+            <h2>Display &amp; timing</h2>
+          </div>
+          <div class="card-body">
+            <div class="grid three">
+              <div>
+                <label for="slideSeconds">Slide duration (s)</label>
+                <input id="slideSeconds" type="number" min="1" max="3600" step="1" value="20">
+              </div>
+              <div>
+                <label for="transitionSeconds">Transition (s)</label>
+                <input id="transitionSeconds" type="number" min="0" max="10" step="0.1" value="0.8">
+              </div>
+              <div>
+                <label for="displayMode">Fit mode</label>
+                <select id="displayMode">
+                  <option value="fit_blur">Fit + blurred background</option>
+                  <option value="fit">Fit (letterbox)</option>
+                  <option value="crop">Crop to fill</option>
+                </select>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="primary" onclick="app.saveDisplay()">Save display settings</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="content" id="section-advanced" data-section-body hidden>
+        <div class="card">
+          <div class="card-head">
+            <h2>Diagnostics</h2>
+          </div>
+          <div class="card-body">
+            <pre id="statusBox" class="code">Loading…</pre>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <h2>Danger zone</h2>
+          </div>
+          <div class="card-body">
+            <p class="muted">Stops the renderer and web server. You'll need to restart the systemd service (or docker container) to bring them back.</p>
+            <button class="danger" onclick="app.stopServer()">Stop service</button>
+          </div>
+        </div>
+      </section>
+
+      <div id="toast" class="toast" hidden></div>
+    </main>
+  </div>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

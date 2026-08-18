@@ -1,0 +1,16 @@
+[Unit]
+Description=Pi Picture Frame Renderer
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/opt/pi-pic-frame
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/pi-pic-frame/.venv/bin/picture-frame-app --config /opt/pi-pic-frame/config.toml
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

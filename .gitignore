@@ -1,0 +1,34 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Test / lint / type-checker caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Runtime / user data
+data/
+secrets/
+immich-data/
+*.log
+
+# Local configuration and secrets
+config.toml
+.env
+.env.local
+
+# OS clutter
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/

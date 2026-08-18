@@ -1,0 +1,16 @@
+.venv/
+.git/
+.pytest_cache/
+__pycache__/
+*.pyc
+*.egg-info/
+data/
+secrets/
+deploy/
+tests/
+docker-compose.yml
+Dockerfile
+.dockerignore
+.gitignore
+config.toml
+.env

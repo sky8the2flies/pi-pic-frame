@@ -1,0 +1,27 @@
+[immich]
+# Set base_url and api_key from the web UI on first launch, or fill in here.
+base_url = "http://immich-server:2283"
+api_key = ""
+albums = []
+request_timeout_seconds = 30.0
+
+[cache]
+directory = "data/cache"
+metadata_file = "data/cache/metadata.json"
+max_disk_usage_percent = 80
+min_free_space_mb = 512
+
+[display]
+slide_seconds = 20
+transition_seconds = 0.8
+# mode: "fit_blur" (whole photo + blurred background), "fit" (letterbox), "crop" (fill+cut)
+mode = "fit_blur"
+
+[sync]
+interval_minutes = 30
+
+[web]
+host = "0.0.0.0"
+port = 8080
+# Leave empty to disable auth. If set, all API calls require Authorization: Bearer <token>.
+auth_token = ""
