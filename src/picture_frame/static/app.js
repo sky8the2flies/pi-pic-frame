@@ -15,6 +15,9 @@ const state = {
   token: null,
   currentSection: "dashboard",
   toastTimer: null,
+  albumSelectionDirty: false,
+  albumSelectionInitialized: false,
+  serverAlbums: [],
 };
 
 async function api(path, options = {}) {
@@ -78,6 +81,16 @@ function getSelectedValues(select) {
   return Array.from(select.options)
     .filter((opt) => opt.selected)
     .map((opt) => opt.value);
+}
+
+function sameSelection(left, right) {
+  const leftSet = new Set(left || []);
+  const rightSet = new Set(right || []);
+  if (leftSet.size !== rightSet.size) return false;
+  for (const value of leftSet) {
+    if (!rightSet.has(value)) return false;
+  }
+  return true;
 }
 
 function formatRelative(iso) {
@@ -201,7 +214,12 @@ function renderStatus(data) {
 
   if (Array.isArray(data.albums)) {
     const select = document.getElementById("albumSelect");
-    setSelectedValues(select, data.albums);
+    state.serverAlbums = data.albums.slice();
+    if (!state.albumSelectionDirty || !state.albumSelectionInitialized) {
+      setSelectedValues(select, data.albums);
+      state.albumSelectionDirty = false;
+      state.albumSelectionInitialized = true;
+    }
   }
 
   renderStorage(data.cache);
@@ -237,10 +255,10 @@ const app = {
 
   async loadAlbums() {
     const select = document.getElementById("albumSelect");
-    const previous = getSelectedValues(select);
     try {
       const data = await api("/immich/albums");
       const albums = (data.result && data.result.albums) || [];
+      const desired = getSelectedValues(select);
       select.innerHTML = "";
       for (const album of albums) {
         const opt = document.createElement("option");
@@ -250,11 +268,12 @@ const app = {
         opt.textContent = `${album.title}${count}${shared}`;
         select.appendChild(opt);
       }
-      setSelectedValues(select, previous);
-      const status = await api("/status");
-      if (Array.isArray(status.albums)) {
-        setSelectedValues(select, status.albums);
+      setSelectedValues(select, desired);
+      if (!state.albumSelectionDirty && Array.isArray(state.serverAlbums)) {
+        setSelectedValues(select, state.serverAlbums);
       }
+      state.albumSelectionInitialized = true;
+      state.albumSelectionDirty = !sameSelection(getSelectedValues(select), state.serverAlbums);
     } catch (err) {
       showToast(err.message, "error");
     }
@@ -268,6 +287,9 @@ const app = {
     };
     try {
       await api("/config/albums", { method: "POST", body: JSON.stringify(payload) });
+      state.serverAlbums = payload.albums.slice();
+      state.albumSelectionDirty = false;
+      state.albumSelectionInitialized = true;
       showToast("Albums saved", "ok");
       await this.refreshStatus();
     } catch (err) {
@@ -405,6 +427,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (event.key === "Enter") document.getElementById("loginSubmit").click();
   });
   document.getElementById("logoutBtn").addEventListener("click", () => app.logout());
+  const albumSelect = document.getElementById("albumSelect");
+  const updateAlbumSelectionDirtyState = () => {
+    state.albumSelectionDirty = !sameSelection(getSelectedValues(albumSelect), state.serverAlbums);
+    state.albumSelectionInitialized = true;
+  };
+  // Track changes as soon as interaction occurs (not only on blur).
+  albumSelect.addEventListener("input", updateAlbumSelectionDirtyState);
+  albumSelect.addEventListener("change", updateAlbumSelectionDirtyState);
 
   const authInfo = await fetch("/auth/config").then((res) => res.json()).catch(() => ({}));
   state.authRequired = !!authInfo.auth_required;

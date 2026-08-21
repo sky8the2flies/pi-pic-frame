@@ -90,6 +90,7 @@ def create_app(runtime: PictureFrameRuntime) -> Flask:
                 },
                 "sync_interval_minutes": runtime.config.sync.interval_minutes,
                 "cache": runtime.cache_stats(),
+                "rotation": runtime.rotation_stats(),
             },
             200,
         )

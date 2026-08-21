@@ -177,6 +177,15 @@ class PictureFrameRuntime:
             "disk": disk,
         }
 
+    def rotation_stats(self) -> dict[str, int]:
+        """Return the current deterministic cache rotation state."""
+        rotation = self.sync.cache.get_rotation_state()
+        return {
+            "total_assets": int(rotation.get("total_assets", 0)),
+            "window_size": len(self.sync.cache.entries()),
+            "next_index": int(rotation.get("next_index", 0)),
+        }
+
     def update_display_settings(
         self,
         slide_seconds: int | None = None,

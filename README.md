@@ -113,6 +113,7 @@ Protected (require `Authorization: Bearer <token>` when `auth_token` is set):
 
 - Photos live under `cache.directory`; metadata in `cache.metadata_file`.
 - Rolling FIFO: when downloading a new photo would push total disk usage past `cache.max_disk_usage_percent` (default 80%) or drop free space below `cache.min_free_space_mb`, the **oldest** cached photo (by last-seen timestamp) is deleted to make room. Repeats until the new photo fits or the cache is empty.
+- When an album contains more photos than the cache can hold, sync uses deterministic, capacity-sized rotation windows. Each sync advances the window cursor, so successive syncs eventually cover every album photo while respecting the disk limits.
 - Nothing is queued or paused — the slideshow keeps cycling through whatever is cached.
 - Both limits are editable at runtime on the **Storage** tab of the dashboard.
 - Failed downloads are logged and counted in the sync stats.

@@ -42,10 +42,22 @@ class PhotoCache:
         self._config = config
         self._config.directory.mkdir(parents=True, exist_ok=True)
         self._config.metadata_file.parent.mkdir(parents=True, exist_ok=True)
+        self._rotation_state = {"total_assets": 0, "next_index": 0}
         self._entries = self._load_metadata()
 
     def entries(self) -> list[CacheEntry]:
         return list(self._entries.values())
+
+    def get_rotation_state(self) -> dict[str, int]:
+        return dict(self._rotation_state)
+
+    def set_rotation_state(self, total_assets: int, next_index: int) -> None:
+        total_assets = max(0, int(total_assets))
+        self._rotation_state = {
+            "total_assets": total_assets,
+            "next_index": int(next_index) % total_assets if total_assets else 0,
+        }
+        self._save_metadata()
 
     def image_paths(self) -> list[Path]:
         paths = [entry.absolute_path(self._config.directory) for entry in self._entries.values()]
@@ -178,6 +190,18 @@ class PhotoCache:
         except (OSError, json.JSONDecodeError):
             logger.warning("Discarding corrupt cache metadata at %s", path, exc_info=True)
             return {}
+        rotation = payload.get("rotation", {})
+        if isinstance(rotation, dict):
+            try:
+                total_assets = max(0, int(rotation.get("total_assets", 0) or 0))
+                next_index = int(rotation.get("next_index", 0) or 0)
+            except (TypeError, ValueError):
+                logger.warning("Ignoring malformed cache rotation state: %r", rotation)
+            else:
+                self._rotation_state = {
+                    "total_assets": total_assets,
+                    "next_index": next_index % total_assets if total_assets else 0,
+                }
         entries: dict[str, CacheEntry] = {}
         for item in payload.get("entries", []):
             relative_path = item.get("relative_path")
@@ -205,6 +229,7 @@ class PhotoCache:
 
     def _save_metadata(self) -> None:
         payload = {
+            "rotation": self._rotation_state,
             "entries": [
                 {
                     "media_id": entry.media_id,

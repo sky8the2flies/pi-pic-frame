@@ -58,6 +58,44 @@ def test_static_assets_served(tmp_path):
     assert b"TOKEN_STORAGE_KEY" in js.get_data()
 
 
+def test_album_selection_ui_avoids_stale_status_override(tmp_path):
+    runtime = _mk_runtime(tmp_path)
+    app = create_app(runtime)
+    client = app.test_client()
+
+    js = client.get("/static/app.js")
+    script = js.get_data(as_text=True)
+
+    assert js.status_code == 200
+    assert "albumSelectionDirty" in script
+    assert "serverAlbums" in script
+    assert 'const status = await api("/status");' not in script
+
+
+def test_album_selection_stays_visually_highlighted_when_unfocused(tmp_path):
+    runtime = _mk_runtime(tmp_path)
+    app = create_app(runtime)
+    client = app.test_client()
+
+    css = client.get("/static/style.css")
+    stylesheet = css.get_data(as_text=True)
+
+    assert css.status_code == 200
+    assert "select[multiple] option:checked" in stylesheet
+
+
+def test_album_selection_tracks_unsaved_changes_on_input_events(tmp_path):
+    runtime = _mk_runtime(tmp_path)
+    app = create_app(runtime)
+    client = app.test_client()
+
+    js = client.get("/static/app.js")
+    script = js.get_data(as_text=True)
+
+    assert js.status_code == 200
+    assert 'albumSelect.addEventListener("input"' in script
+
+
 def test_status_reports_full_config(tmp_path):
     runtime = _mk_runtime(tmp_path)
     app = create_app(runtime)
@@ -72,6 +110,15 @@ def test_status_reports_full_config(tmp_path):
     assert data["display"]["transition_seconds"] == 0.8
     assert data["sync_interval_minutes"] == 30
     assert data["last_error"] is None
+    assert "rotation" in data
+    assert set(data["rotation"].keys()) == {
+        "total_assets",
+        "window_size",
+        "next_index",
+    }
+    assert isinstance(data["rotation"]["total_assets"], int)
+    assert isinstance(data["rotation"]["window_size"], int)
+    assert isinstance(data["rotation"]["next_index"], int)
 
 
 def test_playback_controls_update_state(tmp_path):

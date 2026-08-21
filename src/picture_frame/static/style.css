@@ -346,6 +346,11 @@ select[multiple] {
   padding: 0.35rem;
 }
 select[multiple] option { padding: 0.35rem 0.5rem; border-radius: 4px; }
+/* Keep selected albums visibly highlighted even when control loses focus. */
+select[multiple] option:checked {
+  background: var(--primary-soft);
+  color: var(--text);
+}
 
 .toast {
   position: fixed;

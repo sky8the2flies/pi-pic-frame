@@ -122,6 +122,7 @@ def run_display() -> None:
 def run_web() -> None:
     runtime, _ = _runtime_from_args()
     runtime.refresh_images()
+    runtime.start_sync_loop()
     _serve_wsgi(runtime)
 
 
